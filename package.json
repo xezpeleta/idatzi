@@ -61,6 +61,6 @@
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
-    "idaztian": "github:xezpeleta/idaztian"
+    "idaztian": "git+https://github.com/xezpeleta/Idaztian.git#main"
   }
 }
