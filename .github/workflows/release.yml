@@ -81,7 +81,11 @@ jobs:
           npx electron-builder --mac --arm64 --publish=never
           mkdir -p packages
           cp dist/*.dmg packages/ 2>/dev/null || true
-          cd dist/mac && zip -r "../../${{ matrix.artifact-name }}.zip" "Idatzi.app"
+          # ARM64 builds output to dist/mac-arm64
+          macdir=$(ls -d dist/mac* 2>/dev/null | head -1)
+          if [ -n "$macdir" ]; then
+            cd "$macdir" && zip -r "../../${{ matrix.artifact-name }}.zip" "Idatzi.app"
+          fi
 
       - name: Package Electron app (Windows)
         if: runner.os == 'Windows'
