@@ -43,6 +43,17 @@ jobs:
       - name: Install Python dependencies
         run: pip install -e .
 
+      - name: Build idaztian (git dep)
+        shell: bash
+        run: |
+          if [ -d node_modules/idaztian/packages/idaztian ]; then
+            cd node_modules/idaztian
+            npm install --ignore-scripts
+            cd packages/idaztian
+            npx tsc && npx vite build
+            cd ../../..
+          fi
+
       - name: Type check
         run: npm run typecheck
 

@@ -27,17 +27,26 @@
       "package.json"
     ],
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "category": "Office",
       "icon": null
     },
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "category": "public.app-category.productivity",
       "icon": null
     },
     "win": {
-      "target": ["nsis", "portable"],
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": null
     }
   },
@@ -52,6 +61,6 @@
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
-    "idaztian": "^0.1.0"
+    "idaztian": "github:xezpeleta/idaztian"
   }
 }
