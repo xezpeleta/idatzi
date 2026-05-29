@@ -68,13 +68,19 @@ jobs:
         shell: bash
         run: |
           npx electron-builder --linux --x64 --publish=never
-          7z a "${{ matrix.artifact-name }}.7z" dist/linux-unpacked/
+          # Collect built packages into a staging dir
+          mkdir -p packages
+          cp dist/*.AppImage packages/ 2>/dev/null || true
+          cp dist/*.deb packages/ 2>/dev/null || true
+          ls -la packages/
 
       - name: Package Electron app (macOS)
         if: runner.os == 'macOS'
         shell: bash
         run: |
           npx electron-builder --mac --x64 --publish=never
+          mkdir -p packages
+          cp dist/*.dmg packages/ 2>/dev/null || true
           cd dist/mac && zip -r "../../${{ matrix.artifact-name }}.zip" "Idatzi.app"
 
       - name: Package Electron app (Windows)
@@ -82,14 +88,16 @@ jobs:
         shell: pwsh
         run: |
           npx electron-builder --win --x64 --publish=never
-          7z a "${{ matrix.artifact-name }}.7z" dist/win-unpacked/
+          mkdir packages
+          Copy-Item dist\*.exe packages\ -ErrorAction SilentlyContinue
+          Get-ChildItem packages\
 
-      - name: Upload artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.artifact-name }}
           path: |
-            ${{ matrix.artifact-name }}.7z
+            packages/*
             ${{ matrix.artifact-name }}.zip
           if-no-files-found: error
 
@@ -112,10 +120,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
-          files: |
-            artifacts/idatzi-linux-x64/idatzi-linux-x64.7z
-            artifacts/idatzi-darwin-x64/idatzi-darwin-x64.zip
-            artifacts/idatzi-win-x64/idatzi-win-x64.7z
+          files: artifacts/**/*
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
