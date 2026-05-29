@@ -66,22 +66,35 @@ jobs:
       - name: Package Electron app (Linux)
         if: runner.os == 'Linux'
         shell: bash
+        env:
+          PLATFORM: linux-x64
         run: |
           npx electron-builder --linux --x64 --publish=never
-          # Collect built packages into a staging dir
           mkdir -p packages
-          cp dist/*.AppImage packages/ 2>/dev/null || true
-          cp dist/*.deb packages/ 2>/dev/null || true
+          VERSION="${GITHUB_REF#refs/tags/}"
+          for f in dist/*.AppImage dist/*.deb; do
+            [ -f "$f" ] || continue
+            base="${f##*/}"
+            ext="${base##*.}"
+            target="packages/Idatzi-${VERSION}-${PLATFORM}.${ext}"
+            cp "$f" "$target"
+          done
           ls -la packages/
 
       - name: Package Electron app (macOS)
         if: runner.os == 'macOS'
         shell: bash
+        env:
+          PLATFORM: darwin-arm64
         run: |
           npx electron-builder --mac --arm64 --publish=never
           mkdir -p packages
-          cp dist/*.dmg packages/ 2>/dev/null || true
-          # ARM64 builds output to dist/mac-arm64
+          VERSION="${GITHUB_REF#refs/tags/}"
+          for f in dist/*.dmg; do
+            [ -f "$f" ] || continue
+            target="packages/Idatzi-${VERSION}-${PLATFORM}.dmg"
+            cp "$f" "$target"
+          done
           macdir=$(ls -d dist/mac* 2>/dev/null | head -1)
           if [ -n "$macdir" ]; then
             cd "$macdir" && zip -r "../../${{ matrix.artifact-name }}.zip" "Idatzi.app"
@@ -90,10 +103,16 @@ jobs:
       - name: Package Electron app (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
+        env:
+          PLATFORM: win-x64
         run: |
           npx electron-builder --win --x64 --publish=never
           mkdir packages
-          Copy-Item dist\*.exe packages\ -ErrorAction SilentlyContinue
+          $VERSION = "$env:GITHUB_REF" -replace '^refs/tags/', ''
+          Get-ChildItem dist\*.exe | ForEach-Object {
+            $target = "packages/Idatzi-${VERSION}-$env:PLATFORM.exe"
+            Copy-Item $_.FullName $target
+          }
           Get-ChildItem packages\
 
       - name: Upload artifacts
