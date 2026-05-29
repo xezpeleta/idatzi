@@ -5,6 +5,7 @@
   "private": true,
   "main": "dist/main/index.js",
   "scripts": {
+    "postinstall": "node -e \"const p=require('./node_modules/idaztian/packages/idaztian/package.json');const fs=require('fs');const root=JSON.parse(fs.readFileSync('./node_modules/idaztian/package.json','utf8'));const b='./packages/idaztian/dist/';root.main=b+'idaztian.umd.cjs';root.module=b+'idaztian.js';root.exports={'.':{import:b+'idaztian.js',require:b+'idaztian.umd.cjs',types:b+'index.d.ts'},'./style.css':b+'idaztian.css'};root.types=b+'index.d.ts';fs.writeFileSync('./node_modules/idaztian/package.json',JSON.stringify(root,null,2))\"",
     "dev": "concurrently -k -n main,renderer \"npm run dev:main\" \"npm run dev:renderer\"",
     "dev:main": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && NODE_ENV=development node scripts/wait-for-vite.js && electron .",
     "dev:renderer": "vite src/renderer --port 5173 --strictPort",

@@ -5,10 +5,6 @@ export default defineConfig({
   root: 'src/renderer',
   base: './',
   resolve: {
-    alias: {
-      // Point idaztian to its built dist within the monorepo-style git dep
-      idaztian: path.resolve(__dirname, 'node_modules/idaztian/packages/idaztian/src/index.ts'),
-    },
     // Resolve imports from project root node_modules
     preserveSymlinks: false,
   },
