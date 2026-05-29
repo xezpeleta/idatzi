@@ -67,22 +67,21 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          npx electron-builder --linux --x64 --publish=never --config.electronDist="$(dirname $(which electron))/.." --config.electronVersion="$(npx electron --version)"
+          npx electron-builder --linux --x64 --publish=never
           7z a "${{ matrix.artifact-name }}.7z" dist/linux-unpacked/
 
       - name: Package Electron app (macOS)
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          npx electron-builder --mac --x64 --publish=never --config.electronDist="$(dirname $(which electron))/.." --config.electronVersion="$(npx electron --version)"
+          npx electron-builder --mac --x64 --publish=never
           cd dist/mac && zip -r "../../${{ matrix.artifact-name }}.zip" "Idatzi.app"
 
       - name: Package Electron app (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $electronDist = Split-Path (Get-Command electron).Source -Parent
-          npx electron-builder --win --x64 --publish=never --config.electronDist="$electronDist" --config.electronVersion="$(npx electron --version)"
+          npx electron-builder --win --x64 --publish=never
           7z a "${{ matrix.artifact-name }}.7z" dist/win-unpacked/
 
       - name: Upload artifact

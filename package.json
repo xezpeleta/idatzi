@@ -2,6 +2,7 @@
   "name": "idatzi",
   "version": "0.1.0",
   "description": "Electron desktop markdown editor powered by Idaztian",
+  "author": "xezpeleta",
   "private": true,
   "main": "dist/main/index.js",
   "scripts": {
