@@ -6,7 +6,7 @@ import { startBackend, stopBackend, getStatus, registerStatusListener, BackendSt
 import { recordBackendReady, recordEditorInit, getStartupMetrics, StartupMetrics } from './metrics';
 
 const VITE_DEV_URL = 'http://localhost:5173';
-const IS_DEV = process.env.NODE_ENV !== 'production';
+const IS_DEV = !app.isPackaged;
 
 // ---- Open-path: capture CLI argument / macOS open-file event ----
 let openPath: string | null = null;
