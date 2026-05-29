@@ -1,0 +1,110 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, macos-13, windows-2025]
+        include:
+          - os: ubuntu-22.04
+            artifact-name: idatzi-linux-x64
+          - os: macos-13
+            artifact-name: idatzi-darwin-x64
+          - os: windows-2025
+            artifact-name: idatzi-win-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1a257b94972e7ae72c0f4e53f4a79c85afcb57ef # v4.3.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@a17f32bd4301284e31035cb79b154a9c7b34a9b7 # v5.7.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Python dependencies
+        run: pip install -e .
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+      - name: Package Electron app (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          npx electron-builder --linux --x64 --publish=never --config.electronDist="$(dirname $(which electron))/.." --config.electronVersion="$(npx electron --version)"
+          7z a "${{ matrix.artifact-name }}.7z" dist/linux-unpacked/
+
+      - name: Package Electron app (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          npx electron-builder --mac --x64 --publish=never --config.electronDist="$(dirname $(which electron))/.." --config.electronVersion="$(npx electron --version)"
+          cd dist/mac && zip -r "../../${{ matrix.artifact-name }}.zip" "Idatzi.app"
+
+      - name: Package Electron app (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $electronDist = Split-Path (Get-Command electron).Source -Parent
+          npx electron-builder --win --x64 --publish=never --config.electronDist="$electronDist" --config.electronVersion="$(npx electron --version)"
+          7z a "${{ matrix.artifact-name }}.7z" dist/win-unpacked/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: |
+            ${{ matrix.artifact-name }}.7z
+            ${{ matrix.artifact-name }}.zip
+          if-no-files-found: error
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.3.0
+        with:
+          path: artifacts
+
+      - name: Display structure
+        run: ls -R artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@da05d5523191b1b631c399752253afe3d4c0fcfd # v2.2.2
+        with:
+          files: |
+            artifacts/idatzi-linux-x64/idatzi-linux-x64.7z
+            artifacts/idatzi-darwin-x64/idatzi-darwin-x64.zip
+            artifacts/idatzi-win-x64/idatzi-win-x64.7z
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
