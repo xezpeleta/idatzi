@@ -63,6 +63,14 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Sync version from tag
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "Syncing package.json version to $VERSION"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
       - name: Package Electron app (Linux)
         if: runner.os == 'Linux'
         shell: bash
