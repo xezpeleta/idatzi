@@ -2,8 +2,8 @@ import { app, BrowserWindow, ipcMain, dialog, nativeTheme } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import { startBackend, stopBackend, getStatus, registerStatusListener, BackendStatus } from './backend';
-import { recordBackendReady, recordEditorInit, getStartupMetrics, StartupMetrics } from './metrics';
+import { saveContent, loadContent } from './content-store';
+import { recordEditorInit, getStartupMetrics } from './metrics';
 
 const VITE_DEV_URL = 'http://localhost:5173';
 const IS_DEV = !app.isPackaged;
@@ -28,47 +28,19 @@ app.on('open-file', (event, filePath) => {
 // ---- IPC handlers: Open path ----
 ipcMain.handle('app:get-open-path', () => openPath);
 
-// ---- IPC handlers: Backend ----
-ipcMain.handle('backend:status', () => {
-  return getStatus();
-});
-
-ipcMain.handle('backend:start', async () => {
-  return await startBackend();
-});
-
-ipcMain.handle('backend:stop', () => {
-  stopBackend();
-  return getStatus();
-});
+// ---- IPC handlers: Backend compatibility ----
+// Always return 'connected' — no more backend process.
+ipcMain.handle('backend:status', () => 'connected' as const);
+ipcMain.handle('backend:start', async () => 'connected');
+ipcMain.handle('backend:stop', () => 'connected');
 
 // ---- IPC handlers: Content persistence ----
 ipcMain.handle('backend:save-content', async (_event, content: string) => {
-  const status = getStatus();
-  if (status !== 'connected') return false;
-  try {
-    const resp = await fetch('http://localhost:3099/api/content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
-    });
-    return resp.ok;
-  } catch {
-    return false;
-  }
+  return saveContent(content);
 });
 
 ipcMain.handle('backend:load-content', async () => {
-  const status = getStatus();
-  if (status !== 'connected') return null;
-  try {
-    const resp = await fetch('http://localhost:3099/api/content');
-    if (!resp.ok) return null;
-    const data = await resp.json() as { content?: string };
-    return data.content ?? null;
-  } catch {
-    return null;
-  }
+  return loadContent();
 });
 
 // ---- IPC handlers: Directory listing ----
@@ -213,17 +185,8 @@ ipcMain.handle('window:maximize', () => {
 });
 ipcMain.handle('window:close', () => mainWindow?.close());
 
-// ---- Broadcast status changes to renderer ----
+// ---- Broadcast status changes to renderer (compatibility) ----
 let mainWindow: BrowserWindow | null = null;
-
-registerStatusListener((status: BackendStatus) => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('backend:status-change', status);
-  }
-  if (status === 'connected') {
-    recordBackendReady();
-  }
-});
 
 // ---- Window lifecycle ----
 
@@ -255,9 +218,10 @@ function createWindow(): void {
     }
   });
 
-  // Send initial theme to renderer
+  // Send initial theme and status to renderer
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow?.webContents.send('theme:change', nativeTheme.shouldUseDarkColors);
+    mainWindow?.webContents.send('backend:status-change', 'connected');
   });
 
   mainWindow.on('closed', () => {
@@ -292,9 +256,6 @@ app.whenReady().then(async () => {
     openPath = resolveOpenPath(process.env.IDATZI_OPEN);
   }
 
-  // Start backend automatically on app launch
-  await startBackend();
-
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -302,8 +263,4 @@ app.whenReady().then(async () => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
-});
-
-app.on('before-quit', () => {
-  stopBackend();
 });
