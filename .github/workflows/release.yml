@@ -51,6 +51,10 @@ jobs:
             npm install --ignore-scripts
             cd packages/idaztian
             npx tsc --skipLibCheck && npx vite build
+            # Copy built output to where npm resolves idaztian
+            mkdir -p ../../dist
+            cp -r dist/* ../../dist/
+            cp package.json ../../
             cd ../../..
           fi
 
