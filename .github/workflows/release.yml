@@ -12,12 +12,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-13, windows-2025]
+        os: [ubuntu-22.04, macos-14, windows-2025]
         include:
           - os: ubuntu-22.04
             artifact-name: idatzi-linux-x64
-          - os: macos-13
-            artifact-name: idatzi-darwin-x64
+          - os: macos-14
+            artifact-name: idatzi-darwin-arm64
           - os: windows-2025
             artifact-name: idatzi-win-x64
 
@@ -78,7 +78,7 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          npx electron-builder --mac --x64 --publish=never
+          npx electron-builder --mac --arm64 --publish=never
           mkdir -p packages
           cp dist/*.dmg packages/ 2>/dev/null || true
           cd dist/mac && zip -r "../../${{ matrix.artifact-name }}.zip" "Idatzi.app"
