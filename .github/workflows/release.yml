@@ -50,7 +50,7 @@ jobs:
             cd node_modules/idaztian
             npm install --ignore-scripts
             cd packages/idaztian
-            npx tsc && npx vite build
+            npx tsc --skipLibCheck && npx vite build
             cd ../../..
           fi
 
