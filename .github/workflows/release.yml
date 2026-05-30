@@ -69,7 +69,8 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/}"
           VERSION="${TAG#v}"
           echo "Syncing package.json version to $VERSION"
-          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          node -e "const p=require('./package.json');p.version='${VERSION}';require('fs').writeFileSync('./package.json',JSON.stringify(p,null,2)+'\n')"
+          echo "package.json version is now: $(node -p 'require("./package.json").version')"
 
       - name: Package Electron app (Linux)
         if: runner.os == 'Linux'
