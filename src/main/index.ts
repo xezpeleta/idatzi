@@ -231,7 +231,7 @@ function createWindow(): void {
   if (IS_DEV) {
     mainWindow.loadURL(VITE_DEV_URL);
   } else {
-    const rendererPath = path.join(__dirname, '../renderer/src/renderer/index.html');
+    const rendererPath = path.join(__dirname, '../renderer/index.html');
     mainWindow.loadFile(rendererPath);
   }
 

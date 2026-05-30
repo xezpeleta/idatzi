@@ -25,7 +25,7 @@
     "files": [
       "dist/main/**/*",
       "dist/preload/**/*",
-      "dist/renderer/src/renderer/**/*",
+      "dist/renderer/**/*",
       "package.json"
     ],
     "linux": {
