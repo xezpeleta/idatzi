@@ -70,7 +70,7 @@ Here is a [link to the Idaztian repository](https://github.com/xezpeleta/Idaztia
 
 Image with alt text (move cursor away to see it rendered):
 
-![A scenic mountain landscape](/sample.jpg)
+![A scenic mountain landscape](sample.jpg)
 
 Broken images show the alt text and an error indicator:
 
