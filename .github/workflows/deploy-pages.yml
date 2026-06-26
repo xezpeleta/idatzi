@@ -29,7 +29,7 @@ jobs:
         with:
           repository: xezpeleta/Idaztian
           ref: main
-          path: ../Idaztian
+          path: Idaztian
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,7 +37,7 @@ jobs:
           node-version: 20
 
       - name: Install Idaztian dependencies
-        working-directory: ../Idaztian
+        working-directory: Idaztian
         run: npm ci
 
       - name: Install idatzi dependencies

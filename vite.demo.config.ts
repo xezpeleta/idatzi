@@ -6,7 +6,7 @@ export default defineConfig({
   base: './',
   resolve: {
     alias: {
-      idaztian: path.resolve(__dirname, '../Idaztian/packages/idaztian/src'),
+      idaztian: path.resolve(__dirname, 'Idaztian/packages/idaztian/src'),
     },
   },
   build: {
