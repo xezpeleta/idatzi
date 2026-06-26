@@ -1,112 +1,51 @@
-import { IdaztianEditor } from 'idaztian'
+import './style.css'
 import 'idaztian/style.css'
-
-const SAMPLE = `# Welcome to Idatzi ✍
-
-**Idatzi** is a live-preview markdown editor powered by **[Idaztian](https://github.com/xezpeleta/Idaztian)**, the editor framework.
-
-## Features
-
-- **Live preview** — move your cursor onto any formatted element to reveal its syntax, move away to see the rendered result.
-- **Toolbar** — format text, insert links, create lists with a click.
-- **Context menu** — right-click for cut/copy/paste actions.
-
-## Try it out
-
-### Text formatting
-This text has **bold**, *italic*, and ~~strikethrough~~ formatting. You can also combine ***bold italic***.
-
-### Lists
-- Unordered list item
-- Another item
-  - Nested item
-- Third item
-
-### Ordered list
-1. First step
-2. Second step
-3. Third step
-
-### Task list
-- [x] Install Idaztian
-- [x] Create the editor
-- [ ] Publish your content
-
-### Code
-Inline code: \`const editor = new IdaztianEditor(config)\`
-
-\`\`\`typescript
 import { IdaztianEditor } from 'idaztian'
-import 'idaztian/style.css'
-
-const editor = new IdaztianEditor({
-  parent: document.getElementById('editor'),
-  initialContent: '# Hello World',
-  theme: 'light',
-  toolbar: true,
-})
-\`\`\`
-
-### Blockquotes
-> This is a blockquote. Move your cursor onto this line to see the \`>\` prefix.
-
-> [!NOTE]  
-> This is a note callout. Try it yourself!
-
-### Links and Images
-Visit the [Idaztian repository](https://github.com/xezpeleta/Idaztian) for more details.
-
-### Horizontal Rule
-
----
-
-Separate sections with horizontal rules.
-
-### Tables
-
-| Feature | Status |
-|---------|--------|
-| Live preview | ✅ Done |
-| Tables | ✅ Done |
-| Blockquotes | ✅ Done |
-| Code blocks | ✅ Done |
-| Task lists | ✅ Done |
-
-## Keyboard Shortcuts
-
-| Action | Shortcut |
-|--------|----------|
-| Bold | \`Ctrl+B\` |
-| Italic | \`Ctrl+I\` |
-| Inline code | \`Ctrl+E\` |
-| Strikethrough | \`Ctrl+Shift+K\` |
-| Insert link | \`Ctrl+K\` |
-| Heading 1–6 | \`Ctrl+1\` – \`Ctrl+6\` |
-| Undo | \`Ctrl+Z\` |
-| Redo | \`Ctrl+Shift+Z\` |
-| Find | \`Ctrl+F\` |
-
-Click the **⌨** button in the footer to see all shortcuts.
-`
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div class="demo-container">
-    <header class="demo-header">
-      <span class="demo-logo">✍</span>
-      <h1>Idatzi</h1>
-      <span class="demo-tagline">Live Preview Markdown Editor</span>
-      <a href="https://github.com/xezpeleta/Idaztian" class="demo-gh-link" target="_blank" rel="noopener">GitHub</a>
+  <div class="app-container">
+    <header class="header">
+      <h1>Idatzi ✍</h1>
+      <div class="controls">
+        <label>
+          Theme:
+          <select id="theme-select">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="system">System</option>
+          </select>
+        </label>
+        <label>
+          <input type="checkbox" id="toggle-read-only" /> Read Only
+        </label>
+        <button id="toggle-toolbar">Toggle Toolbar</button>
+      </div>
     </header>
+    
     <div id="editor-container"></div>
   </div>
 `
 
 const container = document.getElementById('editor-container')!
 
-new IdaztianEditor({
+const editor = new IdaztianEditor({
   parent: container,
-  initialContent: SAMPLE,
+  initialContent: '# Welcome to Idatzi ✍\n\n**Idatzi** is a live-preview markdown editor powered by **[Idaztian](https://github.com/xezpeleta/Idaztian)**, the editor framework.\n\n- It features live-preview out of the box\n- Just import the style and the class, and initialize it.\n- You can optionally enable the toolbar or context menu.\n\n## Try it\n\nType some **bold** or *italic* text. Use \`inline code\`. Press `Ctrl+B` for bold.\n\n```typescript\nimport { IdaztianEditor } from \'idaztian\'\nconst editor = new IdaztianEditor({\n  parent: document.getElementById(\'editor\'),\n  initialContent: \'# Hello World\',\n})\n```\n\n> This is a blockquote.\n\n| Feature | Status |\n|---------|--------|\n| Live preview | ✅ Done |\n| Tables | ✅ Done |\n| Blockquotes | ✅ Done |\n| Code blocks | ✅ Done |\n| Task lists | ✅ Done |\n\n- [x] Install Idaztian\n- [x] Create the editor\n- [ ] Publish your content',
   toolbar: true,
-  theme: 'light',
-  lineNumbers: true,
+  readOnly: false,
+  theme: 'light'
+})
+
+document.getElementById('theme-select')!.addEventListener('change', (e) => {
+  const theme = (e.target as HTMLSelectElement).value as 'light' | 'dark' | 'system'
+  editor.setTheme(theme)
+})
+
+document.getElementById('toggle-read-only')!.addEventListener('change', (e) => {
+  const readOnly = (e.target as HTMLInputElement).checked
+  editor.setReadOnly(readOnly)
+})
+
+document.getElementById('toggle-toolbar')!.addEventListener('click', () => {
+  editor.toggleToolbar()
 })

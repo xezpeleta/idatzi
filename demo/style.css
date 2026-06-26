@@ -1,71 +1,26 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f8f9fa;
-  color: #212529;
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
 }
 
-.demo-container {
+#app {
   max-width: 900px;
   margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.demo-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 24px;
-  background: #fff;
-  border-bottom: 1px solid #e9ecef;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.demo-logo {
-  font-size: 24px;
-}
-
-.demo-header h1 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #212529;
-}
-
-.demo-tagline {
-  font-size: 13px;
-  color: #868e96;
-}
-
-.demo-gh-link {
-  margin-left: auto;
-  font-size: 13px;
-  color: #228be6;
-  text-decoration: none;
-  padding: 4px 12px;
-  border: 1px solid #228be6;
-  border-radius: 4px;
-}
-
-.demo-gh-link:hover {
-  background: #228be6;
-  color: #fff;
-}
-
-#editor-container {
-  flex: 1;
-  background: #fff;
-  border: 1px solid #e9ecef;
-  border-top: none;
-  margin: 0 16px 16px;
-  border-radius: 0 0 8px 8px;
-  overflow: hidden;
+  padding: 2rem 1rem;
 }
