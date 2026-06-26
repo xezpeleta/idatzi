@@ -24,7 +24,7 @@ jobs:
       - name: Checkout idatzi
         uses: actions/checkout@v4
 
-      - name: Checkout Idaztian (for local build)
+      - name: Checkout Idaztian
         uses: actions/checkout@v4
         with:
           repository: xezpeleta/Idaztian
@@ -39,6 +39,10 @@ jobs:
       - name: Install Idaztian dependencies
         working-directory: Idaztian
         run: npm ci
+
+      - name: Build Idaztian
+        working-directory: Idaztian
+        run: npm run build
 
       - name: Install idatzi dependencies
         run: npm ci
