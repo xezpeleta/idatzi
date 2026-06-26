@@ -64,8 +64,9 @@ body {
 }
 
 .app-logo {
-  font-size: 20px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  color: var(--text);
 }
 
 .app-name {
