@@ -1,4 +1,4 @@
-import { IdaztianEditor, createHuggingFaceInferenceProvider } from 'idaztian'
+import { IdaztianEditor, createTransformersJsProvider, getTransformersJsState } from 'idaztian'
 
 /**
  * File open and download utilities.
@@ -209,184 +209,102 @@ Click the **⌨** button in the header to see all shortcuts.
 
 let currentFilename = 'document.md'
 const storedContent = loadContent()
-let aiEnabled = false;
+let aiEnabled = false
 
-// ── AI Completion (HuggingFace Inference API) ───────────────────────────────
+// ── AI Completion (Transformers.js — browser-side) ──────────────────────────
 
 function updateAIStatus(state: 'off' | 'on' | 'loading' | 'error', detail?: string) {
-  const btn = document.getElementById('btn-ai')!;
-  const stat = document.getElementById('stat-ai')!;
+  const btn = document.getElementById('btn-ai')!
+  const stat = document.getElementById('stat-ai')!
 
   // Remove all state classes
-  btn.classList.remove('ai-active', 'ai-loading', 'ai-error');
-  stat.classList.remove('stat-ai--off', 'stat-ai--on', 'stat-ai--loading', 'stat-ai--error');
+  btn.classList.remove('ai-active', 'ai-loading', 'ai-error')
+  stat.classList.remove('stat-ai--off', 'stat-ai--on', 'stat-ai--loading', 'stat-ai--error')
 
   switch (state) {
     case 'off':
-      stat.className = 'stat-ai stat-ai--off';
-      stat.textContent = 'AI off';
-      stat.title = 'AI completion available (Ctrl+Shift+I to enable)';
-      break;
+      stat.className = 'stat-ai stat-ai--off'
+      stat.textContent = 'AI off'
+      stat.title = 'AI completion available (Ctrl+Shift+I to enable)'
+      break
     case 'on':
-      btn.classList.add('ai-active');
-      stat.className = 'stat-ai stat-ai--on';
-      stat.textContent = 'AI on';
-      stat.title = 'AI completion enabled (Ctrl+Shift+I to disable)';
-      break;
+      btn.classList.add('ai-active')
+      stat.className = 'stat-ai stat-ai--on'
+      stat.textContent = 'AI on'
+      stat.title = 'AI completion enabled (Ctrl+Shift+I to disable)'
+      break
     case 'loading':
-      btn.classList.add('ai-loading');
-      stat.className = 'stat-ai stat-ai--loading';
-      stat.textContent = 'AI …';
-      stat.title = detail || 'Requesting...';
-      break;
+      btn.classList.add('ai-loading')
+      stat.className = 'stat-ai stat-ai--loading'
+      stat.textContent = 'AI …'
+      stat.title = detail || 'Loading model...'
+      break
     case 'error':
-      btn.classList.add('ai-error');
-      stat.className = 'stat-ai stat-ai--error';
-      stat.textContent = 'AI ⚠';
-      stat.title = detail || 'AI error';
-      break;
+      btn.classList.add('ai-error')
+      stat.className = 'stat-ai stat-ai--error'
+      stat.textContent = 'AI ⚠'
+      stat.title = detail || 'AI error'
+      break
   }
+}
+
+function showAIProgress(pct: number, status: string) {
+  updateAIStatus('loading', `${pct}% — ${status}`)
 }
 
 async function toggleAI() {
   if (!aiEnabled) {
-    aiEnabled = true;
-    updateAIStatus('on');
+    aiEnabled = true
+    updateAIStatus('loading', 'Downloading model (~30MB)...')
+
+    try {
+      // Preload the model eagerly
+      await tfProvider.preload()
+      updateAIStatus('on')
+    } catch (err) {
+      console.warn('[Idaztian Demo] Failed to preload model:', err)
+      updateAIStatus('error', `Model load failed: ${(err as Error).message}`)
+      // Keep AI enabled — the provider will retry on first keystroke
+    }
   } else {
-    aiEnabled = false;
-    updateAIStatus('off');
+    aiEnabled = false
+    updateAIStatus('off')
   }
 }
 
-// Create the HuggingFace Inference API provider
-const hfProvider = createHuggingFaceInferenceProvider({
+// Create the Transformers.js provider (fully-local, browser-side)
+const tfProvider = createTransformersJsProvider({
   modelId: 'HuggingFaceTB/SmolLM2-135M-Instruct',
+  dtype: 'q4',
   maxNewTokens: 30,
   temperature: 0.3,
   systemPrompt: 'You are a helpful writing assistant. Continue the text naturally in English. Output ONLY the continuation — no explanations, no greetings, no questions. Match the tone and style of the preceding text.',
-  onTokenRequired: () => showTokenDialog(),
+  onProgress: showAIProgress,
   onReady() {
     if (aiEnabled) {
-      updateAIStatus('on');
+      updateAIStatus('on')
     }
   },
   onError(err) {
     if (aiEnabled) {
-      updateAIStatus('error', err);
-      console.warn('[Idaztian Demo] AI error:', err);
+      updateAIStatus('error', err)
+      console.warn('[Idaztian Demo] AI error:', err)
     }
   },
-});
+})
 
 // Wrap the provider to respect the aiEnabled toggle
 const gatedProvider = {
   async fetchCompletion(context: string, signal: AbortSignal) {
-    if (!aiEnabled) return null;
+    if (!aiEnabled) return null
     try {
-      return await hfProvider.fetchCompletion(context, signal);
+      return await tfProvider.fetchCompletion(context, signal)
     } catch (err) {
-      if ((err as Error).name === 'AbortError') return null;
-      console.warn('[Idaztian Demo] AI completion error:', err);
-      return null;
+      if ((err as Error).name === 'AbortError') return null
+      console.warn('[Idaztian Demo] AI completion error:', err)
+      return null
     }
   },
-};
-
-// ── Token Dialog ────────────────────────────────────────────────────────────
-
-function showTokenDialog(): Promise<string | null> {
-  return new Promise((resolve) => {
-    const existing = document.getElementById('hf-token-dialog');
-    if (existing) {
-      // Already showing — wait for existing dialog
-      const check = setInterval(() => {
-        if (!document.getElementById('hf-token-dialog')) {
-          clearInterval(check);
-          resolve(null);
-        }
-      }, 200);
-      return;
-    }
-
-    const dialog = document.createElement('div');
-    dialog.id = 'hf-token-dialog';
-    dialog.className = 'token-dialog-backdrop';
-    dialog.innerHTML = `
-      <div class="token-dialog">
-        <h3>HuggingFace Token Required</h3>
-        <p>AI completion uses the free HuggingFace Inference API. Get a token at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">huggingface.co/settings/tokens</a> (free, read-only).</p>
-        <input type="password" id="hf-token-input" placeholder="hf_..." autocomplete="off" />
-        <div class="token-dialog-actions">
-          <button id="hf-token-cancel" class="btn btn-ghost">Cancel</button>
-          <button id="hf-token-save" class="btn btn-primary">Save Token</button>
-        </div>
-        <p class="token-dialog-note">Your token is stored in your browser's localStorage and never sent to any third party.</p>
-      </div>
-    `;
-
-    document.body.appendChild(dialog);
-
-    const input = document.getElementById('hf-token-input') as HTMLInputElement;
-    const saveBtn = document.getElementById('hf-token-save')!;
-    const cancelBtn = document.getElementById('hf-token-cancel')!;
-
-    const cleanup = () => {
-      dialog.remove();
-      editor.focus();
-    };
-
-    saveBtn.addEventListener('click', () => {
-      const token = input.value.trim();
-      if (token) {
-        hfProvider.setToken(token);
-        cleanup();
-        resolve(token);
-      }
-    });
-
-    cancelBtn.addEventListener('click', () => {
-      aiEnabled = false;
-      updateAIStatus('off');
-      cleanup();
-      resolve(null);
-    });
-
-    // Close on backdrop click
-    dialog.addEventListener('click', (e) => {
-      if (e.target === dialog) {
-        aiEnabled = false;
-        updateAIStatus('off');
-        cleanup();
-        resolve(null);
-      }
-    });
-
-    // Close on Escape
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        aiEnabled = false;
-        updateAIStatus('off');
-        cleanup();
-        resolve(null);
-        document.removeEventListener('keydown', onKey);
-      }
-    };
-    document.addEventListener('keydown', onKey);
-
-    // Submit on Enter
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const token = input.value.trim();
-        if (token) {
-          hfProvider.setToken(token);
-          cleanup();
-          resolve(token);
-        }
-      }
-    });
-
-    input.focus();
-  });
 }
 
 const editor = new IdaztianEditor({
@@ -469,15 +387,25 @@ document.addEventListener('keydown', (e) => {
 
 // ── AI Toggle ───────────────────────────────────────────────────────────────
 
-document.getElementById('btn-ai')!.addEventListener('click', toggleAI);
-document.getElementById('stat-ai')!.addEventListener('click', toggleAI);
+document.getElementById('btn-ai')!.addEventListener('click', toggleAI)
+document.getElementById('stat-ai')!.addEventListener('click', toggleAI)
 
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
-    e.preventDefault();
-    toggleAI();
+    e.preventDefault()
+    toggleAI()
   }
-});
+})
 
 // Initialize AI status
-updateAIStatus('off');
+updateAIStatus('off')
+
+// Periodically check Transformers.js state
+setInterval(() => {
+  if (aiEnabled) {
+    const s = getTransformersJsState()
+    if (s.status === 'loading') {
+      updateAIStatus('loading', s.statusText || 'Loading model...')
+    }
+  }
+}, 1000)

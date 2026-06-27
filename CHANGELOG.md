@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.2] — 2025-06-27
+
+### Changed
+- **Demo (GitHub Pages):** Reverted to Transformers.js provider for browser-side AI completions. No server, no API keys — model downloaded once (~30MB) and cached. WebGPU with WASM fallback.
+- **Demo:** Updated model from `SmolLM-135M-Instruct` to `SmolLM2-135M-Instruct` (~2× better quality, same size)
+- Upgraded to Idaztian v1.2.1
+
+---
+
 ## [0.2.1] — 2025-06-27
 
 ### Changed
