@@ -222,6 +222,72 @@ sidebarResize.addEventListener('mousedown', (e) => {
 // ──────────────────────────────────────────────────────────────────
 let currentFilename = 'document.md';
 let editor: IdaztianEditor;
+let aiEnabled = true;
+let aiLastError = '';
+let aiErrorTimeout: ReturnType<typeof setTimeout> | null = null;
+
+// ── AI Completion toggle ──────────────────────────────────────────
+
+/** Show a transient warning in the status bar when the AI provider fails */
+function showAIProviderWarning(message: string, details?: string) {
+  console.warn('[Idatzi AI]', message, details || '');
+  aiLastError = message;
+
+  const btn = document.getElementById('btn-ai')!;
+  btn.classList.add('ai-error');
+
+  const stat = document.getElementById('stat-ai')!;
+  stat.classList.add('stat-ai--error');
+  stat.textContent = 'AI ⚠';
+  stat.setAttribute('title', `${message}${details ? ': ' + details : ''}`);
+
+  // Clear after 8 seconds
+  if (aiErrorTimeout) clearTimeout(aiErrorTimeout);
+  aiErrorTimeout = setTimeout(() => {
+    if (aiLastError === message) {
+      clearAIErrorState();
+    }
+  }, 8000);
+}
+
+function clearAIErrorState() {
+  aiLastError = '';
+  if (aiErrorTimeout) { clearTimeout(aiErrorTimeout); aiErrorTimeout = null; }
+  const btn = document.getElementById('btn-ai')!;
+  btn.classList.remove('ai-error');
+  const stat = document.getElementById('stat-ai')!;
+  stat.classList.remove('stat-ai--error');
+  updateAIIndicator();
+}
+
+function clearAIProviderWarning() {
+  if (aiLastError) clearAIErrorState();
+}
+
+function updateAIIndicator() {
+  const btn = document.getElementById('btn-ai')!;
+  const stat = document.getElementById('stat-ai')!;
+
+  if (aiEnabled) {
+    btn.classList.add('ai-active');
+    btn.setAttribute('title', 'AI completion enabled (Ctrl+Shift+I to disable)');
+    stat.className = 'stat-ai stat-ai--on';
+    stat.textContent = 'AI on';
+    stat.setAttribute('title', 'AI completion enabled (Ctrl+Shift+I to toggle)');
+  } else {
+    btn.classList.remove('ai-active');
+    btn.setAttribute('title', 'AI completion disabled (Ctrl+Shift+I to enable)');
+    stat.className = 'stat-ai stat-ai--off';
+    stat.textContent = 'AI off';
+    stat.setAttribute('title', 'AI completion disabled (Ctrl+Shift+I to toggle)');
+  }
+}
+
+function toggleAI() {
+  aiEnabled = !aiEnabled;
+  if (!aiEnabled) clearAIProviderWarning();
+  updateAIIndicator();
+}
 
 function updateStats(content: string) {
   const words = content.trim() ? content.trim().split(/\s+/).length : 0;
@@ -243,7 +309,66 @@ async function initEditor(initialContent: string) {
     initialContent,
     toolbar: true,
     contextMenu: true,
-    extensions: { math: true },
+    extensions: {
+      math: true,
+      aiCompletion: {
+        provider: {
+          async fetchCompletion(context, signal) {
+            if (!aiEnabled) return null;
+            try {
+              const res = await fetch('http://localhost:11434/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  model: 'llama3.2',
+                  messages: [
+                    { role: 'system', content: 'You are a helpful writing assistant. Continue the text naturally in English. Output ONLY the continuation — no explanations, no greetings, no questions. Match the tone and style of the preceding text.' },
+                    { role: 'user', content: context },
+                  ],
+                  max_tokens: 100,
+                  temperature: 0.3,
+                  stop: ['\n\n', '\n---', '\n#'],
+                }),
+                signal,
+              });
+
+              if (!res.ok) {
+                const status = res.status;
+                // Only warn once per error type to avoid spam on every keystroke
+                if (status === 401 || status === 403) {
+                  showAIProviderWarning('AI auth failed', `HTTP ${status} — check your API key`);
+                } else if (status === 404) {
+                  showAIProviderWarning('AI model not found', `HTTP 404 — the requested model may not be pulled`);
+                } else if (status >= 500) {
+                  showAIProviderWarning('AI server error', `HTTP ${status}`);
+                } else {
+                  showAIProviderWarning('AI request failed', `HTTP ${status}`);
+                }
+                return null;
+              }
+
+              const data = await res.json();
+              const text = data.choices?.[0]?.message?.content;
+              if (!text) return null;
+
+              clearAIProviderWarning();
+              return text.replace(/^[\n\r]+/, '').trimEnd();
+            } catch (err) {
+              if ((err as Error).name === 'AbortError') return null;
+              // Connection refused, DNS failure, timeout, etc.
+              const msg = (err as Error).message || String(err);
+              if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+                showAIProviderWarning('AI unreachable', 'is Ollama running? Try: ollama serve');
+              } else {
+                showAIProviderWarning('AI error', msg.slice(0, 80));
+              }
+              return null;
+            }
+          },
+        },
+        debounceMs: 500,
+      },
+    },
     onChange(content: string) {
       updateStats(content);
       // Auto-save to backend + localStorage fallback
@@ -547,6 +672,27 @@ document.getElementById('btn-toolbar')!.addEventListener('click', () => {
   // The IdaztianEditor exposes toggleToolbar if available
   (editor as any).toggleToolbar?.();
 });
+
+document.getElementById('btn-ai')!.addEventListener('click', toggleAI);
+
+// Status bar AI indicator click also toggles, or shows error details if in error state
+document.getElementById('stat-ai')!.addEventListener('click', () => {
+  if (aiLastError) {
+    // Show error detail in a tooltip-like alert
+    console.error('[Idatzi AI] Last error:', aiLastError);
+  }
+  toggleAI();
+});
+
+// Keyboard shortcut: Ctrl+Shift+I toggles AI
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
+    e.preventDefault();
+    toggleAI();
+  }
+});
+
+updateAIIndicator();
 
 // ──────────────────────────────────────────────────────────────────
 // Theme

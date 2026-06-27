@@ -1,12 +1,12 @@
 {
   "name": "idatzi",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Electron desktop markdown editor powered by Idaztian",
   "author": "xezpeleta <xezpeleta@users.noreply.github.com>",
   "private": true,
   "main": "dist/main/index.js",
   "scripts": {
-    "postinstall": "node -e \"const p=require('./node_modules/idaztian/packages/idaztian/package.json');const fs=require('fs');const root=JSON.parse(fs.readFileSync('./node_modules/idaztian/package.json','utf8'));const b='./packages/idaztian/dist/';root.main=b+'idaztian.umd.cjs';root.module=b+'idaztian.js';root.exports={'.':{import:b+'idaztian.js',require:b+'idaztian.umd.cjs',types:b+'index.d.ts'},'./style.css':b+'idaztian.css'};root.types=b+'index.d.ts';fs.writeFileSync('./node_modules/idaztian/package.json',JSON.stringify(root,null,2))\"",
+    "postinstall": "node -e \"const pkg=require('./node_modules/idaztian/package.json');const fs=require('fs');pkg.main='./dist/idaztian.umd.cjs';pkg.module='./dist/idaztian.js';pkg.exports={'.':{import:'./dist/idaztian.js',require:'./dist/idaztian.umd.cjs',types:'./dist/index.d.ts'},'./style.css':'./dist/idaztian.css'};pkg.types='./dist/index.d.ts';fs.writeFileSync('./node_modules/idaztian/package.json',JSON.stringify(pkg,null,2))\"",
     "dev": "concurrently -k -n main,renderer \"npm run dev:main\" \"npm run dev:renderer\"",
     "dev:main": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json && NODE_ENV=development node scripts/wait-for-vite.js && electron .",
     "dev:renderer": "vite --port 5173 --strictPort",
@@ -63,6 +63,6 @@
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
-    "idaztian": "git+https://github.com/xezpeleta/Idaztian.git#v1.0.4"
+    "idaztian": "file:../Idaztian/packages/idaztian"
   }
 }

@@ -12,6 +12,7 @@ npm run dev
 ## Features
 
 - **Live-preview** markdown editing (Idaztian framework)
+- **AI inline completion** — Copilot-style ghost text powered by Ollama (local) or any OpenAI-compatible API
 - **Sidebar file browser** — browse directories, open files, create/delete files and folders
 - **CLI & Finder integration** — `idatzi myfile.md` or "Open with…" from macOS Finder
 - **Native file dialogs** — open/save via Electron

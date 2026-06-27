@@ -348,6 +348,78 @@ body {
   min-width: 24px;
 }
 
+/* ── AI status indicator ────── */
+
+.stat-ai {
+  font-weight: 500;
+  cursor: pointer;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+
+.stat-ai--on {
+  color: var(--accent);
+  background: rgba(127, 109, 242, 0.12);
+}
+
+.stat-ai--on:hover {
+  background: rgba(127, 109, 242, 0.22);
+}
+
+.stat-ai--off {
+  color: var(--text-faint);
+  background: transparent;
+}
+
+.stat-ai--off:hover {
+  color: var(--text-muted);
+  background: #2a2a2a;
+}
+
+.stat-ai--error {
+  color: #f38ba8;
+  background: rgba(243, 139, 168, 0.12);
+  animation: ai-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ai-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* AI button in header */
+#btn-ai {
+  gap: 4px;
+  padding: 6px 10px;
+}
+
+.btn-ai-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+#btn-ai.ai-active {
+  color: var(--accent);
+  background: rgba(127, 109, 242, 0.12);
+}
+
+#btn-ai.ai-active:hover {
+  background: rgba(127, 109, 242, 0.22);
+}
+
+#btn-ai.ai-error {
+  color: #f38ba8;
+  background: rgba(243, 139, 168, 0.12);
+}
+
+#btn-ai.ai-error:hover {
+  background: rgba(243, 139, 168, 0.22);
+}
+
 /* ── Modal ───────────────────────────────────────────────────────────────── */
 
 .modal {
