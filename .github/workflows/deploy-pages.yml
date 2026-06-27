@@ -44,11 +44,11 @@ jobs:
         working-directory: Idaztian
         run: npm run build
 
-      - name: Setup workspace for file: dependency resolution
+      - name: Setup workspace for file dependency resolution
         run: |
-          # npm's file:../Idaztian/packages/idaztian expects Idaztian
-          # to be a sibling of the parent directory. In CI the repos are
-          # checked out side-by-side under idatzi/, so we need a symlink.
+          # Create symlink so that file:../Idaztian resolves correctly.
+          # In CI, repos are checked out side-by-side under idatzi/,
+          # so the parent-relative path needs to point to the sibling.
           ln -s "$(pwd)/Idaztian" ../Idaztian
 
       - name: Install idatzi dependencies
