@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.1] — 2025-06-27
+
+### Changed
+- **Demo (GitHub Pages):** Switched AI provider from Transformers.js (broken since HF now requires auth for model downloads) to **HuggingFace Inference API** — zero download, instant startup, and free. Users authenticate with a free HF token via an interactive dialog.
+- **Demo:** Updated model from `SmolLM-135M-Instruct` to `SmolLM2-135M-Instruct` (~2× better quality, same size)
+- Upgraded to Idaztian v1.3.0
+
+---
+
 ## [0.2.0] — 2025-06-27
 
 ### Added
