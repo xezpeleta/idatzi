@@ -250,25 +250,45 @@ function updateAIStatus(state: 'off' | 'on' | 'loading' | 'error', detail?: stri
 
 function showAIProgress(pct: number, status: string) {
   updateAIStatus('loading', `${pct}% — ${status}`)
+  // Update the progress bar
+  const bar = document.getElementById('ai-load-progress')
+  const fill = document.getElementById('ai-load-progress-fill')
+  const text = document.getElementById('ai-load-progress-text')
+  if (bar) bar.hidden = false
+  if (fill) fill.style.width = `${pct}%`
+  if (text) text.textContent = `Downloading Qwen2.5-0.5B (${pct}%)`
 }
 
 async function toggleAI() {
   if (!aiEnabled) {
     aiEnabled = true
     updateAIStatus('loading', 'Downloading model (~500MB)...')
+    // Show progress bar immediately
+    const bar = document.getElementById('ai-load-progress')
+    if (bar) bar.hidden = false
 
     try {
       // Preload the model eagerly
       await tfProvider.preload()
       updateAIStatus('on')
+      // Hide progress bar on success
+      const bar = document.getElementById('ai-load-progress')
+      if (bar) bar.hidden = true
     } catch (err) {
       console.warn('[Idaztian Demo] Failed to preload model:', err)
       updateAIStatus('error', `Model load failed: ${(err as Error).message}`)
+      // Hide progress bar on error
+      const bar = document.getElementById('ai-load-progress')
+      if (bar) bar.hidden = true
       // Keep AI enabled — the provider will retry on first keystroke
     }
   } else {
     aiEnabled = false
     updateAIStatus('off')
+    const bar = document.getElementById('ai-load-progress')
+    if (bar) bar.hidden = true
+    const fill = document.getElementById('ai-load-progress-fill')
+    if (fill) fill.style.width = '0%'
   }
 }
 

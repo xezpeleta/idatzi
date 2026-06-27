@@ -267,6 +267,41 @@ body {
   font-weight: 600;
 }
 
+/* ── AI Loading Progress Bar ─────────────────────────────────────────────── */
+
+.ai-load-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.ai-load-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ai-load-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  border-radius: 2px;
+  transition: width 0.3s ease-out;
+}
+
+.ai-load-progress-text {
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
 /* ── Modal ───────────────────────────────────────────────────────────────── */
 
 .modal {
