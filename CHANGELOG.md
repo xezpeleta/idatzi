@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.3] — 2025-06-27
+
+### Changed
+- **Ghost text now rendered dimmed (opacity 0.38) and italic** — styles injected by Idaztian v1.2.2, no consumer changes needed
+- Upgraded to Idaztian v1.2.2
+
+---
+
 ## [0.2.2] — 2025-06-27
 
 ### Changed
