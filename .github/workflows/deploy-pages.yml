@@ -44,8 +44,15 @@ jobs:
         working-directory: Idaztian
         run: npm run build
 
+      - name: Setup workspace for file: dependency resolution
+        run: |
+          # npm's file:../Idaztian/packages/idaztian expects Idaztian
+          # to be a sibling of the parent directory. In CI the repos are
+          # checked out side-by-side under idatzi/, so we need a symlink.
+          ln -s "$(pwd)/Idaztian" ../Idaztian
+
       - name: Install idatzi dependencies
-        run: npm ci
+        run: npm install --no-package-lock
 
       - name: Build demo
         run: npx vite build --config vite.demo.config.ts
