@@ -255,7 +255,7 @@ function showAIProgress(pct: number, status: string) {
 async function toggleAI() {
   if (!aiEnabled) {
     aiEnabled = true
-    updateAIStatus('loading', 'Downloading model (~30MB)...')
+    updateAIStatus('loading', 'Downloading model (~500MB)...')
 
     try {
       // Preload the model eagerly
@@ -274,11 +274,11 @@ async function toggleAI() {
 
 // Create the Transformers.js provider (fully-local, browser-side)
 const tfProvider = createTransformersJsProvider({
-  modelId: 'HuggingFaceTB/SmolLM2-135M-Instruct',
-  dtype: 'q4',
-  maxNewTokens: 30,
+  modelId: 'onnx-community/Qwen2.5-0.5B-Instruct',
+  dtype: 'q4f16',
+  maxNewTokens: 40,
   temperature: 0.3,
-  systemPrompt: 'You are a helpful writing assistant. Continue the text naturally in English. Output ONLY the continuation — no explanations, no greetings, no questions. Match the tone and style of the preceding text.',
+  systemPrompt: 'You are a concise writing assistant. Your task is to continue the provided text naturally. Output ONLY the continuation — never add explanations, greetings, or commentary. Match the tone, style, and language of the preceding text exactly.',
   onProgress: showAIProgress,
   onReady() {
     if (aiEnabled) {
@@ -404,8 +404,8 @@ updateAIStatus('off')
 setInterval(() => {
   if (aiEnabled) {
     const s = getTransformersJsState()
-    if (s.status === 'loading') {
-      updateAIStatus('loading', s.statusText || 'Loading model...')
+    if (s.loading) {
+      updateAIStatus('loading', 'Loading model...')
     }
   }
 }, 1000)

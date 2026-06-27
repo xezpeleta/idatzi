@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.4] — 2025-06-27
+
+### Changed
+- **Demo (GitHub Pages):** Switched model from SmolLM2-135M-Instruct to **Qwen2.5-0.5B-Instruct** (500M params, ~500MB download). Significantly better completion quality (IFEval ~51 vs 29.9).
+- **Demo:** Default dtype changed to `q4f16`, `maxNewTokens` increased to 40.
+- Upgraded to Idaztian v1.2.3
+
+---
+
 ## [0.2.3] — 2025-06-27
 
 ### Changed
