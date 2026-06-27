@@ -193,6 +193,119 @@ body {
   font-size: 11px;
 }
 
+/* ── AI Status ───────────────────────────────────────────────────────────── */
+
+.stat-ai {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.stat-ai--off {
+  color: var(--text-faint);
+  background: transparent;
+}
+
+.stat-ai--off:hover {
+  color: var(--text-muted);
+  background: #2a2a2a;
+}
+
+.stat-ai--on {
+  color: var(--accent);
+  background: rgba(127, 109, 242, 0.1);
+}
+
+.stat-ai--on:hover {
+  background: rgba(127, 109, 242, 0.18);
+}
+
+.stat-ai--loading {
+  color: #f9c74f;
+  background: rgba(249, 199, 79, 0.1);
+  animation: ai-pulse 1.5s ease-in-out infinite;
+}
+
+.stat-ai--error {
+  color: #f38ba8;
+  background: rgba(243, 139, 168, 0.12);
+  animation: ai-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ai-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ── AI Button ───────────────────────────────────────────────────────────── */
+
+#btn-ai.ai-active {
+  color: var(--accent);
+  background: rgba(127, 109, 242, 0.12);
+  border-color: rgba(127, 109, 242, 0.2);
+}
+
+#btn-ai.ai-active:hover {
+  background: rgba(127, 109, 242, 0.22);
+}
+
+#btn-ai.ai-loading {
+  color: #f9c74f;
+  background: rgba(249, 199, 79, 0.1);
+}
+
+#btn-ai.ai-error {
+  color: #f38ba8;
+  background: rgba(243, 139, 168, 0.12);
+}
+
+.btn-ai-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ── AI Load Progress ────────────────────────────────────────────────────── */
+
+#ai-load-progress {
+  display: none;
+  position: fixed;
+  bottom: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-modal);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 12px;
+  color: var(--text);
+  z-index: 50;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  min-width: 280px;
+}
+
+#ai-load-progress.visible {
+  display: block;
+}
+
+.ai-progress-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.ai-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
 /* ── Modal ───────────────────────────────────────────────────────────────── */
 
 .modal {

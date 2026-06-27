@@ -1,4 +1,4 @@
-import { IdaztianEditor } from 'idaztian'
+import { IdaztianEditor, createTransformersJsProvider } from 'idaztian'
 
 /**
  * File open and download utilities.
@@ -209,6 +209,142 @@ Click the **⌨** button in the header to see all shortcuts.
 
 let currentFilename = 'document.md'
 const storedContent = loadContent()
+let aiEnabled = false;
+let aiModelReady = false;
+let aiModelLoading = false;
+
+// ── AI Completion (Transformers.js) ──────────────────────────────────────────
+
+function updateAIStatus(state: 'off' | 'on' | 'loading' | 'error', detail?: string) {
+  const btn = document.getElementById('btn-ai')!;
+  const stat = document.getElementById('stat-ai')!;
+
+  // Remove all state classes
+  btn.classList.remove('ai-active', 'ai-loading', 'ai-error');
+  stat.classList.remove('stat-ai--off', 'stat-ai--on', 'stat-ai--loading', 'stat-ai--error');
+
+  switch (state) {
+    case 'off':
+      btn.classList.remove('ai-active');
+      stat.className = 'stat-ai stat-ai--off';
+      stat.textContent = 'AI off';
+      stat.title = 'AI completion available (Ctrl+Shift+I to enable)';
+      break;
+    case 'on':
+      btn.classList.add('ai-active');
+      stat.className = 'stat-ai stat-ai--on';
+      stat.textContent = 'AI on';
+      stat.title = 'AI completion enabled (Ctrl+Shift+I to disable)';
+      break;
+    case 'loading':
+      btn.classList.add('ai-loading');
+      stat.className = 'stat-ai stat-ai--loading';
+      stat.textContent = 'AI …';
+      stat.title = detail || 'Loading AI model...';
+      break;
+    case 'error':
+      btn.classList.add('ai-error');
+      stat.className = 'stat-ai stat-ai--error';
+      stat.textContent = 'AI ⚠';
+      stat.title = detail || 'AI model failed to load';
+      break;
+  }
+}
+
+function showAIProgress(text: string, pct: number) {
+  const el = document.getElementById('ai-load-progress')!;
+  const fill = document.getElementById('ai-progress-fill')!;
+  const label = document.getElementById('ai-load-text')!;
+
+  el.classList.add('visible');
+  label.textContent = text;
+  fill.style.width = `${pct}%`;
+
+  if (pct >= 100) {
+    setTimeout(() => {
+      el.classList.remove('visible');
+    }, 800);
+  }
+}
+
+function hideAIProgress() {
+  document.getElementById('ai-load-progress')!.classList.remove('visible');
+}
+
+async function toggleAI() {
+  if (aiModelLoading) return; // Don't interrupt loading
+
+  if (!aiEnabled) {
+    // Enable — trigger model download immediately
+    aiEnabled = true;
+    updateAIStatus('loading', 'Downloading AI model (~30MB)...');
+    aiModelLoading = true;
+
+    try {
+      await tfProvider.preload();
+      // onReady callback will set aiModelReady and update UI
+    } catch {
+      // onError callback will set aiModelLoading = false and show error
+    }
+  } else {
+    // Disable
+    aiEnabled = false;
+    updateAIStatus('off');
+    hideAIProgress();
+    aiModelLoading = false;
+  }
+}
+
+// Create the Transformers.js provider (model loads lazily)
+const tfProvider = createTransformersJsProvider({
+  modelId: 'HuggingFaceTB/SmolLM3-135M-Instruct',
+  dtype: 'q4',
+  device: 'webgpu', // Falls back to wasm automatically if WebGPU unavailable
+  maxNewTokens: 30,
+  temperature: 0.3,
+  systemPrompt: 'You are a helpful writing assistant. Continue the text naturally in English. Output ONLY the continuation — no explanations, no greetings, no questions. Match the tone and style of the preceding text.',
+  onProgress(pct, status) {
+    aiModelLoading = true;
+    updateAIStatus('loading', status);
+    showAIProgress(status, pct);
+  },
+  onReady() {
+    aiModelReady = true;
+    aiModelLoading = false;
+    hideAIProgress();
+    if (aiEnabled) {
+      updateAIStatus('on');
+    }
+  },
+  onError(err) {
+    aiModelLoading = false;
+    hideAIProgress();
+    if (aiEnabled) {
+      updateAIStatus('error', err);
+      console.warn('[Idaztian Demo] AI model failed:', err);
+    }
+  },
+});
+
+// Wrap the provider to respect the aiEnabled toggle
+const gatedProvider = {
+  async fetchCompletion(context: string, signal: AbortSignal) {
+    if (!aiEnabled) return null;
+    if (aiModelLoading) return null; // Don't queue requests during model load
+    try {
+      const result = await tfProvider.fetchCompletion(context, signal);
+      // If we got here and weren't ready before, we're now ready
+      if (!aiModelReady && result !== null) {
+        aiModelReady = true;
+      }
+      return result;
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return null;
+      console.warn('[Idaztian Demo] AI completion error:', err);
+      return null;
+    }
+  },
+};
 
 const editor = new IdaztianEditor({
   parent: document.getElementById('editor')!,
@@ -217,6 +353,10 @@ const editor = new IdaztianEditor({
   contextMenu: true,
   extensions: {
     math: true,
+    aiCompletion: {
+      provider: gatedProvider,
+      debounceMs: 500,
+    },
   },
   onChange(content) {
     updateStats(content)
@@ -283,3 +423,18 @@ backdrop.addEventListener('click', closeModal)
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !modal.hidden) closeModal()
 })
+
+// ── AI Toggle ───────────────────────────────────────────────────────────────
+
+document.getElementById('btn-ai')!.addEventListener('click', toggleAI);
+document.getElementById('stat-ai')!.addEventListener('click', toggleAI);
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
+    e.preventDefault();
+    toggleAI();
+  }
+});
+
+// Initialize AI status
+updateAIStatus('off');
