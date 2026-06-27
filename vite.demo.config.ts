@@ -14,5 +14,10 @@ export default defineConfig({
   build: {
     outDir: '../demo-dist',
     emptyOutDir: true,
+    rollupOptions: {
+      // Do not bundle @huggingface/transformers — it's an optional
+      // peer dep loaded dynamically only when AI completion is enabled.
+      external: [/^@huggingface\/transformers/],
+    },
   },
 })

@@ -1,4 +1,4 @@
-import { IdaztianEditor, createTransformersJsProvider, getTransformersJsState } from 'idaztian'
+import { IdaztianEditor } from 'idaztian'
 
 /**
  * File open and download utilities.
@@ -209,123 +209,6 @@ Click the **⌨** button in the header to see all shortcuts.
 
 let currentFilename = 'document.md'
 const storedContent = loadContent()
-let aiEnabled = false
-
-// ── AI Completion (Transformers.js — browser-side) ──────────────────────────
-
-function updateAIStatus(state: 'off' | 'on' | 'loading' | 'error', detail?: string) {
-  const btn = document.getElementById('btn-ai')!
-  const stat = document.getElementById('stat-ai')!
-
-  // Remove all state classes
-  btn.classList.remove('ai-active', 'ai-loading', 'ai-error')
-  stat.classList.remove('stat-ai--off', 'stat-ai--on', 'stat-ai--loading', 'stat-ai--error')
-
-  switch (state) {
-    case 'off':
-      stat.className = 'stat-ai stat-ai--off'
-      stat.textContent = 'AI off'
-      stat.title = 'AI completion available (Ctrl+Shift+I to enable)'
-      break
-    case 'on':
-      btn.classList.add('ai-active')
-      stat.className = 'stat-ai stat-ai--on'
-      stat.textContent = 'AI on'
-      stat.title = 'AI completion enabled (Ctrl+Shift+I to disable)'
-      break
-    case 'loading':
-      btn.classList.add('ai-loading')
-      stat.className = 'stat-ai stat-ai--loading'
-      stat.textContent = 'AI …'
-      stat.title = detail || 'Loading model...'
-      break
-    case 'error':
-      btn.classList.add('ai-error')
-      stat.className = 'stat-ai stat-ai--error'
-      stat.textContent = 'AI ⚠'
-      stat.title = detail || 'AI error'
-      break
-  }
-}
-
-function showAIProgress(pct: number, status: string) {
-  updateAIStatus('loading', `${pct}% — ${status}`)
-  // Update the progress bar
-  const bar = document.getElementById('ai-load-progress')
-  const fill = document.getElementById('ai-load-progress-fill')
-  const text = document.getElementById('ai-load-progress-text')
-  if (bar) bar.hidden = false
-  if (fill) fill.style.width = `${pct}%`
-  if (text) text.textContent = `Downloading Qwen2.5-0.5B (${pct}%)`
-}
-
-async function toggleAI() {
-  if (!aiEnabled) {
-    aiEnabled = true
-    updateAIStatus('loading', 'Downloading model (~750MB)...')
-    // Show progress bar immediately
-    const bar = document.getElementById('ai-load-progress')
-    if (bar) bar.hidden = false
-
-    try {
-      // Preload the model eagerly
-      await tfProvider.preload()
-      updateAIStatus('on')
-      // Hide progress bar on success
-      const bar = document.getElementById('ai-load-progress')
-      if (bar) bar.hidden = true
-    } catch (err) {
-      console.warn('[Idaztian Demo] Failed to preload model:', err)
-      updateAIStatus('error', `Model load failed: ${(err as Error).message}`)
-      // Hide progress bar on error
-      const bar = document.getElementById('ai-load-progress')
-      if (bar) bar.hidden = true
-      // Keep AI enabled — the provider will retry on first keystroke
-    }
-  } else {
-    aiEnabled = false
-    updateAIStatus('off')
-    const bar = document.getElementById('ai-load-progress')
-    if (bar) bar.hidden = true
-    const fill = document.getElementById('ai-load-progress-fill')
-    if (fill) fill.style.width = '0%'
-  }
-}
-
-// Create the Transformers.js provider (fully-local, browser-side)
-const tfProvider = createTransformersJsProvider({
-  modelId: 'onnx-community/Qwen2.5-0.5B-Instruct',
-  dtype: 'q4',
-  maxNewTokens: 40,
-  temperature: 0.3,
-  systemPrompt: 'You are a concise writing assistant. Your task is to continue the provided text naturally. Output ONLY the continuation — never add explanations, greetings, or commentary. Match the tone, style, and language of the preceding text exactly.',
-  onProgress: showAIProgress,
-  onReady() {
-    if (aiEnabled) {
-      updateAIStatus('on')
-    }
-  },
-  onError(err) {
-    if (aiEnabled) {
-      updateAIStatus('error', err)
-      console.warn('[Idaztian Demo] AI error:', err)
-    }
-  },
-})
-
-// Wrap the provider to respect the aiEnabled toggle
-const gatedProvider = {
-  async fetchCompletion(context: string, signal: AbortSignal) {
-    if (!aiEnabled) return null
-    try {
-      return await tfProvider.fetchCompletion(context, signal)
-    } catch (err) {
-      if ((err as Error).name === 'AbortError') return null
-      console.warn('[Idaztian Demo] AI completion error:', err)
-      return null
-    }
-  },
-}
 
 const editor = new IdaztianEditor({
   parent: document.getElementById('editor')!,
@@ -334,10 +217,6 @@ const editor = new IdaztianEditor({
   contextMenu: true,
   extensions: {
     math: true,
-    aiCompletion: {
-      provider: gatedProvider,
-      debounceMs: 500,
-    },
   },
   onChange(content) {
     updateStats(content)
@@ -404,28 +283,3 @@ backdrop.addEventListener('click', closeModal)
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !modal.hidden) closeModal()
 })
-
-// ── AI Toggle ───────────────────────────────────────────────────────────────
-
-document.getElementById('btn-ai')!.addEventListener('click', toggleAI)
-document.getElementById('stat-ai')!.addEventListener('click', toggleAI)
-
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
-    e.preventDefault()
-    toggleAI()
-  }
-})
-
-// Initialize AI status
-updateAIStatus('off')
-
-// Periodically check Transformers.js state
-setInterval(() => {
-  if (aiEnabled) {
-    const s = getTransformersJsState()
-    if (s.loading) {
-      updateAIStatus('loading', 'Loading model...')
-    }
-  }
-}, 1000)
