@@ -262,7 +262,7 @@ function showAIProgress(pct: number, status: string) {
 async function toggleAI() {
   if (!aiEnabled) {
     aiEnabled = true
-    updateAIStatus('loading', 'Downloading model (~500MB)...')
+    updateAIStatus('loading', 'Downloading model (~750MB)...')
     // Show progress bar immediately
     const bar = document.getElementById('ai-load-progress')
     if (bar) bar.hidden = false
@@ -295,7 +295,7 @@ async function toggleAI() {
 // Create the Transformers.js provider (fully-local, browser-side)
 const tfProvider = createTransformersJsProvider({
   modelId: 'onnx-community/Qwen2.5-0.5B-Instruct',
-  dtype: 'q4f16',
+  dtype: 'q4',
   maxNewTokens: 40,
   temperature: 0.3,
   systemPrompt: 'You are a concise writing assistant. Your task is to continue the provided text naturally. Output ONLY the continuation — never add explanations, greetings, or commentary. Match the tone, style, and language of the preceding text exactly.',

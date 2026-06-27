@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.5] — 2025-06-27
+
+### Fixed
+- **Demo:** Changed dtype from `q4f16` to `q4` — fixes ONNX Runtime crash (`SimplifiedLayerNormFusion` / `InsertedPrecisionFreeCast`) in browsers.
+  `q4` uses fp32 activations, fully compatible with ONNX Runtime WASM. Tradeoff: ~750MB download vs ~500MB.
+- **Demo:** Model download size updated in UI to reflect ~750MB
+- Upgraded to Idaztian v1.3.1
+
+---
+
 ## [0.2.4] — 2025-06-27
 
 ### Changed
